@@ -3,7 +3,7 @@
 define('ROOT', dirname(__DIR__));
 
 // Çalışma klasörleri (sürüm ZIP'inden ya da git'ten gelen kurulumda boş olabilir): eksikse oluşturulur
-foreach (['storage', 'storage/uploads', 'storage/logs', 'storage/tmp', 'storage/cache', 'storage/backups'] as $dir) {
+foreach (['storage', 'storage/uploads', 'storage/logs', 'storage/tmp', 'storage/cache', 'storage/backups', 'storage/sessions'] as $dir) {
     if (!is_dir(ROOT . "/$dir")) @mkdir(ROOT . "/$dir", 0775, true);
 }
 if (!is_file(ROOT . '/storage/.htaccess')) @file_put_contents(ROOT . '/storage/.htaccess', "Require all denied\n");

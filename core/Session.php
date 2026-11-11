@@ -7,7 +7,15 @@ class Session
     {
         if (session_status() !== PHP_SESSION_NONE) return;
 
+        // Oturumlar sitenin kendi klasöründe: aynı sunucudaki (ya da aynı alan adındaki) başka bir Modrix kopyasının
+        // oturumu bu sitede geçmez. Bilinmeyen oturum kimliği use_strict_mode ile reddedilir, yenisi açılır.
+        $dir = ROOT . '/storage/sessions';
+        if (!is_dir($dir)) @mkdir($dir, 0775, true);
         session_start([
+            'save_path'       => $dir,
+            'gc_probability'  => 1,
+            'gc_divisor'      => 100,
+            'gc_maxlifetime'  => 86400,
             'cookie_httponly' => true,
             'cookie_samesite' => 'Lax',
             'cookie_secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',

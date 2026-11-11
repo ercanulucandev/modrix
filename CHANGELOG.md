@@ -2,6 +2,13 @@
 
 Her sürüm "## vX.Y.Z" başlığıyla; sürüm yayınlanınca bu bölüm GitHub'daki sürüm notu ve sitelerdeki Güncellemeler sayfasında gösterilir.
 
+## v1.0.3
+
+- Oturumlar artık her sitenin kendi `storage/sessions` klasöründe tutulur: aynı sunucudaki ya da aynı alan adındaki başka
+  bir Modrix kopyasının oturumu (giriş, kurulum adımı) bu sitede geçmez
+- Kurulum: önceki bir kurulumdan kalan oturumla açılınca çıkan "View bulunamadı: install/step4.php" hatası düzeltildi;
+  sihirbaz her zaman ilk adımdan başlar
+
 ## v1.0.2
 
 - Kurulum: veritabanı ayarı henüz yazılmamış yeni bir kopya, aynı sunucuda varsayılan adla (`modrix`) duran başka bir sitenin

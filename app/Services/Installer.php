@@ -49,7 +49,16 @@ final class Installer
             header('Location: ' . Request::url('install'));
             return;
         }
-        $step = Session::get('install_step', 1);
+        // Oturum bu kuruluma ait değilse (başka bir kopyadan kalma giriş, adım vb.) temizlenir
+        $site = hash('sha256', ROOT);
+        if (Session::get('install_site') !== $site) {
+            $_SESSION = [];
+            Session::regenerate();
+            Session::set('install_site', $site);
+        }
+        // Adım 1-3; 3. adım veritabanı ayarı yazılmadan açılmaz
+        $step = (int) Session::get('install_step', 1);
+        if ($step < 1 || $step > 3 || ($step === 3 && !is_file(ROOT . '/app/Config/database.local.php'))) $step = 1;
         $error = null;
         if (Request::method() === 'POST') {
             if (!hash_equals(Session::token(), (string) Request::post('_token'))) $error = 'Oturum süresi doldu; sayfayı yenileyip tekrar deneyin.';
