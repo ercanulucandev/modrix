@@ -27,7 +27,9 @@ final class Installer
     public static function installed(): bool
     {
         if (is_file(ROOT . self::LOCK)) return true;
-        // Eski kurulumlar: kilit dosyası yok ama veritabanında kullanıcı var
+        // Eski kurulumlar: kilit dosyası yok ama veritabanında kullanıcı var.
+        // Veritabanı ayarı hiç yazılmadıysa bakılmaz: yeni kopya, varsayılan adla duran başka bir sitenin veritabanına bağlanmasın.
+        if (!is_file(ROOT . '/app/Config/database.local.php')) return false;
         try {
             if (Database::pdo()->query("SHOW TABLES LIKE 'users'")->fetchColumn() && Database::value('SELECT COUNT(*) FROM users') > 0) {
                 @file_put_contents(ROOT . self::LOCK, date('c') . "\n");

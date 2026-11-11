@@ -2,6 +2,11 @@
 
 Her sürüm "## vX.Y.Z" başlığıyla; sürüm yayınlanınca bu bölüm GitHub'daki sürüm notu ve sitelerdeki Güncellemeler sayfasında gösterilir.
 
+## v1.0.2
+
+- Kurulum: veritabanı ayarı henüz yazılmamış yeni bir kopya, aynı sunucuda varsayılan adla (`modrix`) duran başka bir sitenin
+  veritabanını görüp kendini kurulu sanmaz; kurulum sihirbazı açılır
+
 ## v1.0.1
 
 ### Temalar
