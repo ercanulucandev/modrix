@@ -1,0 +1,30 @@
+# Yerel ayarlar ve test hesapları (app/Config/database.php içindeki açıklamaya bakın)
+/app/Config/*.local.php
+
+# Composer
+/vendor/
+
+# Yüklenen dosyalar ve loglar
+/storage/uploads/*
+/storage/logs/*
+/storage/tmp/
+/storage/backups/
+/storage/cache/
+/storage/installed.lock
+
+# module:pack çıktıları
+/dist/
+!/storage/**/.gitkeep
+
+# Editör / sistem
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Modüller ve ek temalar çekirdekte değil: modrix-store ve modrix-themes depolarında (php modrix store:build).
+# Geliştirirken burada durur, çekirdek paketine girmez. Çekirdekte yalnız başlangıç teması (Default).
+/app/Modules/*
+!/app/Modules/.gitkeep
+/app/Themes/*
+!/app/Themes/Default/

@@ -1,0 +1,23 @@
+{
+    "name": "Varsayılan",
+    "version": "1.0.0",
+    "description": "Sade, köşeli ve hızlı. Blog, kişisel site ve küçük işletmeler için temiz bir başlangıç. Diğer temaların eksik dosyaları bu temadan gelir.",
+    "author": "Modrix",
+    "requires": {
+        "php": "8.1"
+    },
+    "menus": {
+        "header": "Üst menü",
+        "footer": "Alt menü"
+    },
+    "sections": {
+        "home": [
+            {
+                "type": "hero"
+            },
+            {
+                "type": "core.cta"
+            }
+        ]
+    }
+}

@@ -1,0 +1,54 @@
+# Her push ve pull request'te: PHP söz dizimi, migration'lar (temiz veritabanına), tüm modüllerin kurulumu ve testler.
+name: Testler
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.1', '8.4']
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: modrix
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -proot"
+          --health-interval=5s --health-timeout=5s --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo_mysql, mbstring, fileinfo, gd, zip, curl, sodium
+          coverage: none
+
+      - name: PHP söz dizimi
+        run: |
+          find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 -P4 php -l > /dev/null
+          php -l modrix
+
+      - name: Veritabanı ayarı
+        run: |
+          cat > app/Config/database.local.php <<'PHP'
+          <?php return ['host' => '127.0.0.1', 'port' => 3306, 'name' => 'modrix', 'user' => 'root', 'pass' => 'root'];
+          PHP
+
+      - name: Migration'lar ve modüller
+        run: |
+          php modrix migrate
+          for m in app/Modules/*/; do if [ -f "$m/module.json" ]; then php modrix module:install "$(basename "$m")"; fi; done
+          php modrix module:list
+
+      - name: Testler
+        run: php modrix test

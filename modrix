@@ -1,0 +1,463 @@
+#!/usr/bin/env php
+<?php
+// Komut satırı aracı:  php modrix <komut>
+if (PHP_SAPI !== 'cli') exit;
+
+require __DIR__ . '/core/bootstrap.php';
+
+use Core\Migrator;
+use Core\Module;
+use Core\ModuleInstaller;
+
+// Modül komutlarının ortak gövdesi: php modrix module:install Blog
+$moduleCommand = fn(string $verb, callable $action) => function (array $args) use ($verb, $action) {
+    $name = $args[0] ?? '';
+    if ($name === '') { echo "Kullanım: php modrix module:$verb Blog\n"; return 1; }
+    try {
+        $action($name);
+    } catch (Throwable $e) {
+        echo "  ✗ {$e->getMessage()}\n";
+        return 1;
+    }
+    echo "  ✓ $name: $verb tamam\n";
+};
+
+$commands = [
+    'migrate' => ['Bekleyen migration\'ları çalıştırır', function () {
+        $ran = Migrator::migrate(fn($name) => print("  ✓ $name\n"));
+        echo $ran ? count($ran) . " migration çalıştı.\n" : "Bekleyen migration yok.\n";
+    }],
+
+    'migrate:status' => ['Migration durumları', function () {
+        foreach (Migrator::status() as $name => $s) echo ($s['done'] ? '  ✓ ' : '  · ') . str_pad($s['module'] ?? 'core', 10) . $name . "\n";
+    }],
+
+    'module:list' => ['Modüller ve durumları', function () {
+        $labels = ['active' => 'aktif', 'inactive' => 'pasif', 'not_installed' => 'kurulmamış'];
+        foreach (Module::all() as $folder => $m) {
+            echo '  ' . str_pad($folder, 16) . str_pad('v' . ($m['installed_version'] ?? $m['version']), 10) . str_pad($labels[$m['state']], 12)
+               . ($m['update'] ? "güncelleme: v{$m['version']}" : '') . ($m['error'] ? "HATA: {$m['error']}" : '') . "\n";
+        }
+    }],
+    'module:install'   => ['Modülü kurar (migration + aktif)',               $moduleCommand('install', fn($n) => Module::install($n))],
+    'module:update'    => ['Modülü günceller (yeni migration\'lar)',         $moduleCommand('update', fn($n) => Module::update($n))],
+    'module:enable'    => ['Modülü aktif eder',                              $moduleCommand('enable', fn($n) => Module::enable($n))],
+    'module:disable'   => ['Modülü pasife alır (veriler kalır)',             $moduleCommand('disable', fn($n) => Module::disable($n))],
+    'module:uninstall' => ['Modülü kaldırır (TABLOLARI SİLER)',              $moduleCommand('uninstall', fn($n) => Module::uninstall($n))],
+    'module:pack'      => ['Modülü ZIP\'ler:  php modrix module:pack Blog  ->  dist/Blog-1.0.0.zip', function (array $args) {
+        if (!$args) { echo "Kullanım: php modrix module:pack Blog\n"; return 1; }
+        try {
+            $file = ModuleInstaller::pack($args[0]);
+        } catch (Throwable $e) {
+            echo "  ✗ {$e->getMessage()}\n";
+            return 1;
+        }
+        echo '  ✓ ' . str_replace(ROOT . '/', '', $file) . ' (' . round(filesize($file) / 1024, 1) . " KB)\n";
+    }],
+    'module:zip'       => ['ZIP\'ten kurar/günceller:  php modrix module:zip dosya.zip', function (array $args) {
+        if (!$args) { echo "Kullanım: php modrix module:zip dosya.zip\n"; return 1; }
+        try {
+            $r = ModuleInstaller::fromZip($args[0]);
+        } catch (Throwable $e) {
+            echo "  ✗ {$e->getMessage()}\n";
+            return 1;
+        }
+        echo "  ✓ {$r['folder']} {$r['version']} " . ($r['action'] === 'updated' ? 'güncellendi' : 'kuruldu') . "\n";
+    }],
+
+    'make:migration' => ['Yeni migration:  php modrix make:migration create_posts_table [Modül]', function (array $args) {
+        if (!$args) { echo "Kullanım: php modrix make:migration create_posts_table [Modül]\n"; return 1; }
+        echo 'Oluşturuldu: ' . str_replace(ROOT . '/', '', Migrator::make($args[0], $args[1] ?? null)) . "\n";
+    }],
+
+    'admin:create' => ['Admin hesabı:  php modrix admin:create "Ad Soyad" email@site.com sifre', function (array $args) {
+        [$name, $email, $password] = array_pad($args, 3, null);
+        $errors = Core\Validator::check(
+            ['name' => $name, 'email' => $email, 'password' => $password],
+            ['name' => 'required|max:100', 'email' => 'required|email|unique:users,email', 'password' => 'required|min:8'],
+            ['name' => 'Ad', 'email' => 'E-posta', 'password' => 'Şifre']
+        );
+        if ($errors) {
+            foreach ($errors as $e) echo "  ✗ $e\n";
+            echo "Kullanım: php modrix admin:create \"Ad Soyad\" email@site.com sifre\n";
+            return 1;
+        }
+        $id = App\Models\User::register(['name' => $name, 'email' => $email, 'password' => $password, 'role' => 'admin']);
+        echo "Admin oluşturuldu (#$id): $email  ->  /admin/login\n";
+    }],
+
+    'test' => ['Testleri çalıştırır (tests/):  php modrix test [süzgeç]', function (array $args) {
+        // Testler web isteği gibi çalışsın (kök adres: /)
+        $_SERVER['SCRIPT_NAME'] = '/index.php';
+        $_SERVER['REQUEST_URI'] ??= '/';
+        $_SERVER['HTTP_HOST'] ??= 'localhost';
+        require_once ROOT . '/tests/Runner.php';
+        return Tests\Runner::run($args[0] ?? null);
+    }],
+    'version' => ['Modrix sürümü', function () {
+        echo 'Modrix v' . Core\App::VERSION . ' · PHP ' . PHP_VERSION . "\n";
+    }],
+    'update:check' => ['Yeni sürüm var mı (GitHub Releases)', function () {
+        $l = App\Services\Updater::latest(true);
+        if (!empty($l['error'])) { echo "  ✗ {$l['error']}\n"; return 1; }
+        echo App\Services\Updater::available() ? "  Yeni sürüm: v{$l['version']} (kullandığınız v" . Core\App::VERSION . "). Güncellemek için: php modrix update\n" : '  Güncel: v' . Core\App::VERSION . "\n";
+    }],
+    'update' => ['Güncelle (önce tam yedek):  php modrix update [--file=paket.zip] [--force]', function (array $args) {
+        $file = null;
+        foreach ($args as $a) if (str_starts_with($a, '--file=')) $file = substr($a, 7);
+        try {
+            $r = App\Services\Updater::apply($file, in_array('--force', $args, true), fn($m) => print("  · $m\n"));
+        } catch (Throwable $e) {
+            echo "  ✗ {$e->getMessage()}\n";
+            return 1;
+        }
+        echo "  ✓ v{$r['from']} → v{$r['to']}\n";
+    }],
+    'store:build' => ['Mağaza paketleri:  php modrix store:build [--themes] --base=https://.../  (dist/store ya da dist/themes)', function (array $args) {
+        $base = '';
+        foreach ($args as $a) if (str_starts_with($a, '--base=')) $base = rtrim(substr($a, 7), '/') . '/';
+        $type = in_array('--themes', $args, true) ? 'themes' : 'modules';
+        try {
+            $file = App\Services\Store::build($base, $type);
+        } catch (Throwable $e) {
+            echo "  ✗ {$e->getMessage()}\n";
+            return 1;
+        }
+        $n = count(json_decode(file_get_contents($file), true)[$type]);
+        echo '  ✓ ' . str_replace(ROOT . '/', '', $file) . " ($n " . ($type === 'themes' ? 'tema' : 'modül') . "). Klasörü mağaza deposuna gönderin (git add -A, commit, push).\n";
+    }],
+    'release:pack' => ['Sürüm paketi:  dist/modrix-{sürüm}.zip + .sha256 (GitHub sürümüne yüklenir)', function () {
+        try {
+            $file = App\Services\Updater::pack();
+        } catch (Throwable $e) {
+            echo "  ✗ {$e->getMessage()}\n";
+            return 1;
+        }
+        echo '  ✓ ' . str_replace(ROOT . '/', '', $file) . ' (' . round(filesize($file) / 1048576, 2) . " MB)\n";
+        echo "  Yayınlamak: gh release create v" . Core\App::VERSION . " $file $file.sha256 --notes \"...\"\n";
+    }],
+
+    'backup' => ['Yedek alır (cron için):  php modrix backup [--db]  (--db: sadece veritabanı)', function (array $args) {
+        try {
+            $name = App\Services\Backup::create(!in_array('--db', $args, true));
+        } catch (Throwable $e) {
+            echo "  ✗ {$e->getMessage()}\n";
+            return 1;
+        }
+        App\Services\Activity::log('backup.created', "Komut satırından yedek alındı: $name", 'admin/backups', []);
+        echo '  ✓ storage/backups/' . $name . ' (' . round(filesize(App\Services\Backup::dir() . "/$name") / 1048576, 2) . " MB)\n";
+    }],
+    'backup:restore' => ['Yedeği geri yükler (ÜZERİNE YAZAR):  php modrix backup:restore storage/backups/yedek-....zip', function (array $args) {
+        $file = $args[0] ?? '';
+        if (!is_file($file)) { echo "Dosya bulunamadı. Kullanım: php modrix backup:restore storage/backups/yedek-....zip\n"; return 1; }
+        if (!in_array('--force', $args, true)) {
+            echo "Veritabanı ve yüklenen dosyalar bu yedektekiyle DEĞİŞTİRİLECEK. Devam? (evet/hayır): ";
+            if (trim((string) fgets(STDIN)) !== 'evet') { echo "Vazgeçildi.\n"; return 1; }
+        }
+        try {
+            $r = App\Services\Backup::restore($file);
+        } catch (Throwable $e) {
+            echo "  ✗ {$e->getMessage()}\n";
+            return 1;
+        }
+        echo "  ✓ {$r['statements']} SQL komutu, {$r['files']} dosya geri yüklendi\n";
+        if ($r['safety']) echo "  Önceki hal yedeklendi: storage/backups/{$r['safety']}\n";
+    }],
+
+    'media:sizes' => ['Görsellerin telefon/tablet kopyalarını (srcset) üretir:  php modrix media:sizes [--all]', function (array $args) {
+        $all = in_array('--all', $args, true);
+        $query = App\Models\Media::query()->where('type', 'image');
+        if (!$all) $query->whereNull('sizes');
+        $images = $query->get();
+        $made = 0;
+        foreach ($images as $m) $made += App\Services\MediaService::regenerateSizes($m);
+        echo "  ✓ " . count($images) . " görsel, $made kopya üretildi" . ($all ? '' : ' (hepsini yeniden üretmek için --all)') . "\n";
+    }],
+    'cache:clear' => ['Sayfa önbelleğini temizler', function () {
+        echo '  ✓ ' . App\Services\PageCache::flush() . " sayfa silindi\n";
+    }],
+
+    '2fa:reset' => ['İki adımlı doğrulamayı kapatır:  php modrix 2fa:reset email@site.com', function (array $args) {
+        $user = isset($args[0]) ? App\Models\User::findByEmail($args[0]) : null;
+        if (!$user) { echo "Kullanıcı bulunamadı. Kullanım: php modrix 2fa:reset email@site.com\n"; return 1; }
+        App\Services\TwoFactor::disable($user['id']);
+        App\Services\Activity::log('user.2fa', "İki adımlı doğrulama komut satırından sıfırlandı: {$user['name']}", null, []);
+        echo "  ✓ {$user['email']}: iki adımlı doğrulama kapatıldı\n";
+    }],
+
+    'make:theme' => ['Yeni tema iskeleti:  php modrix make:theme Ajans', function (array $args) {
+        $name = ucfirst(preg_replace('/[^A-Za-z0-9]/', '', $args[0] ?? ''));
+        if ($name === '') { echo "Kullanım: php modrix make:theme Ajans\n"; return 1; }
+        $dir = ROOT . "/app/Themes/$name";
+        if (is_dir($dir)) { echo "Tema zaten var: app/Themes/$name\n"; return 1; }
+
+        $files = [
+            'theme.json' => json_encode([
+                'name' => $name, 'version' => '1.0.0', 'description' => '', 'author' => '', 'requires' => ['php' => '8.1'],
+                'menus' => ['header' => 'Üst menü', 'footer' => 'Alt menü'],
+                'sections' => ['home' => [['type' => 'hero'], ['type' => 'core.text']]],
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n",
+
+            'settings.php' => <<<'TPL'
+            <?php
+            // Görünüm > Özelleştir > genel ayarlar. Okuma: Theme::get('primary_color'), Theme::color('primary_color', '#000000')
+            return [
+                'colors' => [
+                    'label'  => 'Renkler',
+                    'fields' => [
+                        'primary_color' => ['label' => 'Ana renk', 'type' => 'color', 'rules' => 'required|regex:/^#[0-9a-fA-F]{6}$/', 'default' => '#4f46e5'],
+                    ],
+                ],
+                'footer' => [
+                    'label'  => 'Alt kısım',
+                    'fields' => [
+                        'footer_about' => ['label' => 'Tanıtım yazısı', 'type' => 'textarea', 'rules' => 'nullable|max:300'],
+                    ],
+                ],
+            ];
+
+            TPL,
+
+            'views/layouts/site.php' => <<<'TPL'
+            <?php
+            // {{Name}} tema: site layout'u. Theme::head(), $content ve Theme::footer() olmazsa olmaz (bkz. docs/themes.md).
+            $siteName = Setting::get('site_name', Config::get('app.name'));
+            $primary  = Theme::color('primary_color', '#4f46e5');
+            $isHome   = trim(Request::path(), '/') === '';
+            ?>
+            <!doctype html>
+            <html lang="tr">
+            <head>
+            <?= Theme::head($title ?? null, $metaDescription ?? null, $metaImage ?? null) ?>
+              <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.1.13"></script>
+              <style type="text/tailwindcss">
+                @theme {
+                  --font-sans: ui-sans-serif, system-ui, sans-serif;
+                  --color-background: #ffffff;
+                  --color-foreground: #0f172a;
+                  --color-card: #ffffff;
+                  --color-muted: #f1f5f9;
+                  --color-muted-foreground: #64748b;
+                  --color-accent: #f1f5f9;
+                  --color-accent-foreground: #0f172a;
+                  --color-border: #e2e8f0;
+                  --color-input: #e2e8f0;
+                  --color-primary: <?= $primary ?>;
+                  --color-primary-foreground: <?= Theme::contrast($primary) ?>;
+                  --color-destructive: #dc2626;
+                  --color-ring: <?= $primary ?>;
+                  --radius-sm: 4px; --radius-md: 6px; --radius-lg: 8px; --radius-xl: 12px;
+                }
+              </style>
+            <?= View::render('partials/ui-styles') ?>
+            </head>
+            <body class="flex min-h-screen flex-col">
+              <header class="border-b" <?= Theme::editable('identity', 'site_name') ?>>
+                <div class="wrap flex h-16 items-center justify-between gap-6">
+                  <a href="<?= Request::url('/') ?>" class="font-semibold tracking-tight"><?= View::e($siteName) ?></a>
+                  <nav class="flex items-center gap-6"><?= View::render('partials/nav', ['items' => Menu::location('header')]) ?></nav>
+                </div>
+              </header>
+
+              <main class="flex-1 <?= $isHome ? '' : 'wrap py-12' ?>">
+                <?= View::render('partials/flash') ?>
+                <?= $content ?>
+              </main>
+
+              <footer class="border-t" <?= Theme::editable('footer') ?>>
+                <div class="wrap flex flex-wrap items-center justify-between gap-4 py-8 text-sm text-muted-foreground">
+                  <p <?= Theme::editable('footer', 'footer_about') ?>><?= View::e(Theme::get('footer_about') ?: '© ' . date('Y') . ' ' . $siteName) ?></p>
+                  <nav class="flex gap-4">
+                    <?php foreach (Menu::location('footer') as $item): ?>
+                      <a href="<?= View::e($item['href']) ?>" class="hover:text-foreground"><?= View::e($item['label']) ?></a>
+                    <?php endforeach ?>
+                  </nav>
+                </div>
+              </footer>
+            <?= Theme::footer() ?>
+            </body>
+            </html>
+
+            TPL,
+
+            'views/home.php' => <<<'TPL'
+            <?php // Ana sayfa: bölümlerden oluşur (Görünüm > Özelleştir > Ana sayfa bölümleri) ?>
+            <?= Section::render('home', ['moduleSections' => $sections]) ?>
+
+            TPL,
+
+            'sections/hero/schema.php' => <<<'TPL'
+            <?php
+            return [
+                'name'        => 'Giriş',
+                'description' => 'Başlık, açıklama ve düğme.',
+                'icon'        => 'sparkles',
+                'fields'      => [
+                    'title'       => ['label' => 'Başlık', 'type' => 'text', 'default' => 'Hoş geldiniz'],
+                    'text'        => ['label' => 'Açıklama', 'type' => 'textarea', 'default' => 'Kısa bir tanıtım yazısı.'],
+                    'button_text' => ['label' => 'Düğme yazısı', 'type' => 'text', 'default' => 'İletişim'],
+                    'button_link' => ['label' => 'Düğme bağlantısı', 'type' => 'link', 'default' => '#iletisim'],
+                ],
+            ];
+
+            TPL,
+
+            'sections/hero/view.php' => <<<'TPL'
+            <?php // Giriş bölümü. $s: title, text, button_text, button_link ?>
+            <section class="bg-muted py-20">
+              <div class="wrap max-w-3xl text-center">
+                <h1 class="text-4xl font-semibold tracking-tight sm:text-5xl" <?= $edit('title') ?>><?= View::e($s['title']) ?></h1>
+                <?php if ($s['text'] !== ''): ?><p class="mt-4 text-lg text-muted-foreground" <?= $edit('text') ?>><?= nl2br(View::e($s['text'])) ?></p><?php endif ?>
+                <?php if ($s['button_text'] !== '' && $s['button_link'] !== ''): ?>
+                  <a href="<?= View::e(Menu::href($s['button_link'])) ?>" class="btn btn-primary btn-lg mt-8" <?= $edit('button_text') ?>><?= View::e($s['button_text']) ?></a>
+                <?php endif ?>
+              </div>
+            </section>
+
+            TPL,
+
+            'screenshot.svg' => <<<'TPL'
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900"><rect width="1200" height="900" fill="#f8fafc"/><rect width="1200" height="80" fill="#fff"/><rect x="60" y="30" width="140" height="20" rx="4" fill="#0f172a"/><rect y="80" width="1200" height="380" fill="#f1f5f9"/><rect x="350" y="190" width="500" height="44" rx="6" fill="#0f172a"/><rect x="420" y="260" width="360" height="16" rx="8" fill="#94a3b8"/><rect x="520" y="320" width="160" height="48" rx="8" fill="#4f46e5"/><text x="600" y="700" font-family="sans-serif" font-size="56" font-weight="700" fill="#cbd5e1" text-anchor="middle">{{Name}}</text></svg>
+
+            TPL,
+        ];
+
+        foreach ($files as $path => $content) {
+            if (!is_dir(dirname("$dir/$path"))) mkdir(dirname("$dir/$path"), 0775, true);
+            file_put_contents("$dir/$path", str_replace('{{Name}}', $name, $content));
+        }
+        mkdir("$dir/assets", 0775, true);
+        touch("$dir/assets/.gitkeep");
+
+        echo "Oluşturuldu: app/Themes/$name\n";
+        echo "Görünüm > Temalar'da önizleyip etkinleştirebilirsiniz. Rehber: docs/theme-tutorial.md\n";
+    }],
+    'make:section' => ['Yeni bölüm:  php modrix make:section takvim --theme=Ajans  (ya da --module=Blog, hiçbiri: genel)', function (array $args) {
+        $name = strtolower(preg_replace('/[^a-z0-9-]/i', '', $args[0] ?? ''));
+        if ($name === '' || !preg_match('/^[a-z][a-z0-9-]{0,40}$/', $name)) { echo "Kullanım: php modrix make:section takvim --theme=Ajans | --module=Blog\n"; return 1; }
+
+        $theme = $module = null;
+        foreach (array_slice($args, 1) as $a) {
+            if (str_starts_with($a, '--theme=')) $theme = substr($a, 8);
+            if (str_starts_with($a, '--module=')) $module = substr($a, 9);
+        }
+        $base = match (true) {
+            $theme !== null  => ROOT . "/app/Themes/$theme/sections",
+            $module !== null => ROOT . "/app/Modules/$module/Sections",
+            default          => ROOT . '/app/Sections',
+        };
+        if (($theme && !is_dir(ROOT . "/app/Themes/$theme")) || ($module && !is_dir(ROOT . "/app/Modules/$module"))) { echo "Tema/modül bulunamadı.\n"; return 1; }
+        $dir = "$base/$name";
+        if (is_dir($dir)) { echo 'Bölüm zaten var: ' . str_replace(ROOT . '/', '', $dir) . "\n"; return 1; }
+        mkdir($dir, 0775, true);
+
+        $title = ucfirst(str_replace('-', ' ', $name));
+        file_put_contents("$dir/schema.php", str_replace('{{Title}}', $title, <<<'TPL'
+        <?php
+        // Bölüm tanımı. Alan türleri: text, textarea, richtext, link, image, select, icon, checkbox, color, number, repeater
+        return [
+            'name'        => '{{Title}}',
+            'description' => '',
+            'icon'        => 'layers',
+            'fields'      => [
+                'title' => ['label' => 'Başlık', 'type' => 'text', 'default' => '{{Title}}'],
+                'items' => ['label' => 'Öğeler', 'type' => 'repeater', 'item_name' => 'Öğe', 'item_label' => 'title', 'max' => 12,
+                    'fields'  => [
+                        'icon'  => ['label' => 'Simge', 'type' => 'icon', 'default' => 'star'],
+                        'title' => ['label' => 'Başlık', 'type' => 'text', 'default' => 'Yeni öğe'],
+                        'text'  => ['label' => 'Yazı', 'type' => 'textarea', 'default' => ''],
+                    ],
+                    'default' => [['icon' => 'star', 'title' => 'Birinci', 'text' => 'Kısa açıklama.'], ['icon' => 'heart', 'title' => 'İkinci', 'text' => 'Kısa açıklama.']]],
+            ],
+        ];
+
+        TPL));
+        file_put_contents("$dir/view.php", <<<'TPL'
+        <?php
+        // Değişkenler: $s (temizlenmiş değerler), $edit('alan') (önizlemede tıkla-düzenle), $section, $context
+        if (!$s['items']) return;
+        ?>
+        <section class="py-16">
+          <div class="wrap">
+            <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl" <?= $edit('title') ?>><?= View::e($s['title']) ?></h2>
+            <div class="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <?php foreach ($s['items'] as $i => $item): ?>
+                <div class="card p-6">
+                  <span class="text-primary"><?= Icon::svg($item['icon']) ?></span>
+                  <h3 class="mt-3 font-semibold" <?= $edit("items.$i.title") ?>><?= View::e($item['title']) ?></h3>
+                  <?php if ($item['text'] !== ''): ?><p class="mt-2 text-sm text-muted-foreground" <?= $edit("items.$i.text") ?>><?= View::e($item['text']) ?></p><?php endif ?>
+                </div>
+              <?php endforeach ?>
+            </div>
+          </div>
+        </section>
+
+        TPL);
+
+        $id = $theme !== null ? $name : ($module !== null ? strtolower($module) . ".$name" : "core.$name");
+        echo 'Oluşturuldu: ' . str_replace(ROOT . '/', '', $dir) . "  (kimlik: $id)\n";
+        echo "Görünüm > Özelleştir > Ana sayfa bölümleri > Bölüm ekle listesinde çıkar. Rehber: docs/sections.md\n";
+    }],
+    'make:module' => ['Yeni modül iskeleti:  php modrix make:module Blog', function (array $args) {
+        $name = ucfirst(preg_replace('/[^A-Za-z0-9]/', '', $args[0] ?? ''));
+        if ($name === '') { echo "Kullanım: php modrix make:module Blog\n"; return 1; }
+
+        $dir = ROOT . "/app/Modules/$name";
+        if (is_dir($dir)) { echo "Modül zaten var: app/Modules/$name\n"; return 1; }
+
+        foreach (['Controllers', 'Models', 'Views', 'Migrations', 'Middlewares'] as $sub) mkdir("$dir/$sub", 0775, true);
+        $slug = strtolower($name);
+
+        file_put_contents("$dir/routes.php", <<<PHP
+        <?php
+        use App\Modules\\$name\Controllers\\{$name}Controller;
+
+        Router::group(['prefix' => '/$slug'], function () {
+            Router::get('/', [{$name}Controller::class, 'index'])->name('$slug.index');
+        });
+
+        PHP);
+        file_put_contents("$dir/Controllers/{$name}Controller.php", <<<PHP
+        <?php
+        namespace App\Modules\\$name\Controllers;
+
+        use Core\Controller;
+        use Core\View;
+
+        class {$name}Controller extends Controller
+        {
+            public function index(): View
+            {
+                return \$this->view('$name::index', ['title' => '$name']);
+            }
+        }
+
+        PHP);
+        file_put_contents("$dir/Views/index.php", "<h1 class=\"text-3xl font-semibold tracking-tight\">$name</h1>\n<p class=\"mt-2 text-muted-foreground\">app/Modules/$name/Views/index.php</p>\n");
+        file_put_contents("$dir/module.json", json_encode([
+            'name'        => $name,
+            'version'     => '1.0.0',
+            'description' => '',
+            'author'      => '',
+            'requires'    => ['php' => '8.1'],
+            'menu'        => ['site' => [['url' => $slug, 'label' => $name, 'order' => 50]], 'admin' => []],
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n");
+        file_put_contents("$dir/hooks.php", "<?php\n// $name modülünün hook'ları (modül aktifken yüklenir). Kullanılabilir noktalar: app/Hooks.php\n");
+        foreach (['Models', 'Migrations', 'Middlewares'] as $sub) touch("$dir/$sub/.gitkeep");
+
+        echo "Oluşturuldu: app/Modules/$name\n";
+        echo "Kurmak için: php modrix module:install $name  (ya da Admin > Modüller). Rehber: docs/module-tutorial.md\n";
+    }],
+];
+
+$name = $argv[1] ?? 'list';
+if (!isset($commands[$name])) {
+    echo "Komutlar:\n";
+    foreach ($commands as $cmd => [$desc]) echo '  ' . str_pad($cmd, 18) . $desc . "\n";
+    exit($name === 'list' ? 0 : 1);
+}
+
+$result = $commands[$name][1](array_slice($argv, 2));
+// Komut veriyi/kodu değiştirmiş olabilir: sayfa önbelleği temizlenir
+if ($name !== 'list' && class_exists(App\Services\PageCache::class)) App\Services\PageCache::flush();
+exit(is_int($result) ? $result : 0);

@@ -1,0 +1,50 @@
+# Sürüm yayınlama: "v1.2.3" etiketi gönderilince (git tag v1.2.3 && git push origin v1.2.3)
+#   1) etiket core/App.php içindeki VERSION ile aynı mı, 2) söz dizimi ve testler,
+#   3) php modrix release:pack ile paket + SHA-256, 4) GitHub sürümü (notlar CHANGELOG.md'deki "## v1.2.3" bölümünden).
+# Sitelerdeki güncelleyici (Admin > Sistem > Güncellemeler) bu sürümü görür.
+name: Sürüm
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_mysql, mbstring, fileinfo, gd, zip, curl, sodium
+          coverage: none
+
+      - name: Etiket ve sürüm aynı mı
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          CODE=$(php -r 'require "core/App.php"; echo Core\App::VERSION;')
+          if [ "$TAG" != "$CODE" ]; then echo "::error::Etiket v$TAG ama core/App.php VERSION = $CODE"; exit 1; fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+
+      - name: Söz dizimi ve testler
+        run: |
+          find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 -P4 php -l > /dev/null
+          php modrix test
+
+      - name: Paket
+        run: php modrix release:pack
+
+      - name: Sürüm notları
+        run: |
+          awk -v v="## v$TAG" 'index($0, v) == 1 {f=1; next} /^## v/ {f=0} f' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "Modrix v$TAG" > notes.md
+          cat notes.md
+
+      - name: GitHub sürümü
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" "dist/modrix-$TAG.zip" "dist/modrix-$TAG.zip.sha256" --title "Modrix v$TAG" --notes-file notes.md

@@ -1,0 +1,2 @@
+# Ana .htaccess devre dışı kalsa bile bu klasör açılmaz
+Require all denied
