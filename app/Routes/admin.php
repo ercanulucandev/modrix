@@ -92,6 +92,7 @@ Router::group(['middleware' => ['admin']], function () {
             Router::get('/', [AppearanceController::class, 'index'])->name('admin.appearance');
             Router::post('/themes/{name}/activate', [AppearanceController::class, 'activate'])->name('admin.appearance.activate');
             Router::post('/themes/{name}/preview', [AppearanceController::class, 'preview'])->name('admin.appearance.preview');
+            Router::post('/themes/{name}/delete', [AppearanceController::class, 'destroy'])->name('admin.appearance.delete');
             Router::post('/preview/stop', [AppearanceController::class, 'stopPreview'])->name('admin.appearance.preview.stop');
             Router::get('/themes/{name}/screenshot', [AppearanceController::class, 'screenshot'])->name('admin.appearance.screenshot');
             Router::get('/customize', [AppearanceController::class, 'customize'])->name('admin.appearance.customize');

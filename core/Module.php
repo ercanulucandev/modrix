@@ -306,8 +306,22 @@ class Module
         if (strtolower($folder) === 'app') throw new RuntimeException('"App" modül adı olarak kullanılamaz (core için ayrılmış)');
     }
 
+    // Symlink ya da Windows junction mı? (PHP junction'ı is_link ile tanımaz: gerçek yol, klasörün kendi yolundan farklıysa bağlantıdır)
+    public static function isLink(string $path): bool
+    {
+        if (is_link($path)) return true;
+        $real = realpath($path);
+        $parent = realpath(dirname($path));
+        return $real !== false && $parent !== false && strcasecmp($real, $parent . DIRECTORY_SEPARATOR . basename($path)) !== 0;
+    }
+
     public static function removeDir(string $dir): void
     {
+        // Bağlantıysa (symlink / Windows junction) sadece bağlantı kaldırılır; hedefteki dosyalara dokunulmaz
+        if (self::isLink($dir)) {
+            PHP_OS_FAMILY === 'Windows' ? rmdir($dir) : unlink($dir);
+            return;
+        }
         $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS), \RecursiveIteratorIterator::CHILD_FIRST);
         foreach ($it as $f) $f->isDir() ? rmdir($f->getPathname()) : unlink($f->getPathname());
         rmdir($dir);

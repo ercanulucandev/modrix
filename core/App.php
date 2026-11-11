@@ -11,7 +11,7 @@ namespace Core;
 class App
 {
     // Modrix sürümü. Yeni sürüm: burayı artırın, php modrix release:pack, GitHub'da v1.2.3 etiketiyle sürüm (bkz. docs/updates.md)
-    public const VERSION = '1.0.0';
+    public const VERSION = '1.0.1';
 
     public static function run(): void
     {

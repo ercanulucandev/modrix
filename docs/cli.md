@@ -46,6 +46,6 @@ Proje kökünde `php modrix` tüm komutları listeler.
 | `php modrix update:check` | Yeni sürüm var mı (GitHub Releases) |
 | `php modrix update [--file=paket.zip]` | Günceller (önce tam yedek; hata olursa geri alır) |
 | `php modrix release:pack` | Sürüm paketi: `dist/modrix-{sürüm}.zip` + `.sha256` |
-| `php modrix store:build --base=https://.../` | Modül mağazası: tüm modüllerin ZIP'leri + `dist/store/catalog.json` |
+| `php modrix store:build [--themes] [--out=klasör]` | Mağaza paketleri ve `catalog.json` (varsayılan: yandaki `modrix-modules` / `modrix-themes`) |
 | `php modrix backup [--db]` | Yedek alır (cron için; `--db`: sadece veritabanı) |
 | `php modrix backup:restore dosya.zip` | Yedeği geri yükler (önce mevcut hali yedekler) |

@@ -7,7 +7,7 @@ use Throwable;
 
 // Temalar: sitenin görünümü. Her tema app/Themes/{Ad}/ klasöründedir (bkz. docs/themes.md).
 //
-//   app/Themes/Kurumsal/
+//   app/Themes/Redmo/
 //   ├── theme.json            ad, sürüm, açıklama, menü konumları
 //   ├── screenshot.png        Görünüm > Temalar'daki önizleme (svg/png/webp/jpg)
 //   ├── settings.php          Özelleştir alanları (bölümler halinde)
@@ -16,11 +16,11 @@ use Throwable;
 //   ├── modules/Blog/         modül görünümlerini ezer: Blog::index -> modules/Blog/index.php
 //   └── assets/               css, js, görseller -> /theme/kurumsal/css/style.css  (Theme::asset())
 //
-// Görünüm arama sırası (sitede): etkin tema -> Default tema -> app/Views (ya da modülün Views'ı).
+// Görünüm arama sırası (sitede): etkin tema -> başlangıç teması (Baslangic) -> app/Views (ya da modülün Views'ı).
 // Yani bir tema sadece değiştirmek istediği dosyaları içerir; olmayanlar Default'tan gelir.
 // Yönetim paneli temadan etkilenmez.
 //
-//   Theme::active()                 etkin tema klasörü ('Default')
+//   Theme::active()                 etkin tema klasörü ('Baslangic')
 //   Theme::get('hero_title')        etkin temanın Özelleştir değeri (yoksa tanımdaki varsayılan)
 //   Theme::bool('sticky_header')    Theme::url('hero_image')   Theme::asset('css/style.css')
 //   Theme::head($title, $desc)      <head> içine: başlık, SEO, favicon, analytics, özel kod, modül eklentileri
@@ -29,7 +29,7 @@ use Throwable;
 //   Menu::location('header')        temanın menü konumuna atanmış menü (bkz. core/Menu.php)
 class Theme
 {
-    public const DEFAULT = 'Default';
+    public const DEFAULT = 'Baslangic';   // başlangıç teması (çekirdekle gelir, silinemez)
     public const SCREENSHOTS = ['svg' => 'image/svg+xml', 'png' => 'image/png', 'webp' => 'image/webp', 'jpg' => 'image/jpeg'];
     private const PREVIEW_KEY = '_theme_preview';
     private const DRAFT_KEY = '_theme_customize';
@@ -40,7 +40,7 @@ class Theme
 
     // ================================================================ BULMA
 
-    // ['Default' => ['name', 'version', 'description', 'author', 'menus', 'folder', 'active', 'error'], ...]
+    // ['Baslangic' => ['name', 'version', 'description', 'author', 'menus', 'folder', 'active', 'error'], ...]
     public static function all(): array
     {
         $themes = [];
@@ -104,6 +104,22 @@ class Theme
             'author'      => (string) ($m['author'] ?? ''),
             'menus'       => $menus,
         ];
+    }
+
+    // Etkin olmayan temayı siler: klasörü, ayarları, bölüm düzeni ve menü atamaları. Etkin tema ve başlangıç teması silinemez.
+    public static function delete(string $folder): void
+    {
+        if (!self::validName($folder) || !is_dir(ROOT . "/app/Themes/$folder")) throw new RuntimeException('Tema bulunamadı.');
+        if ($folder === self::DEFAULT) throw new RuntimeException('Başlangıç teması silinemez: diğer temaların eksik dosyaları ondan gelir.');
+        if ($folder === self::saved()) throw new RuntimeException('Etkin tema silinemez; önce başka bir temayı etkinleştirin.');
+        if (self::previewing() === $folder) self::stopPreview();
+
+        $slug = self::slug($folder);
+        foreach (['theme_' . $slug . '\_%', 'menu_location_' . $slug . '\_%'] as $pattern) {
+            Database::table('settings')->whereRaw('`key` LIKE ?', [$pattern])->delete();
+        }
+        Module::removeDir(ROOT . "/app/Themes/$folder");
+        unset(self::$manifests[$folder]);
     }
 
     public static function exists(string $folder): bool
@@ -325,7 +341,7 @@ class Theme
         return Request::url('theme/' . self::slug() . "/$path");
     }
 
-    // Adresteki küçük harfli addan tema klasörü: 'kurumsal' -> 'Kurumsal'
+    // Adresteki küçük harfli addan tema klasörü: 'redmo' -> 'Redmo'
     public static function folderFromSlug(string $slug): ?string
     {
         if (!preg_match('/^[a-z0-9]{1,50}$/', $slug)) return null;

@@ -5,8 +5,8 @@ herkesin kullanabileceği Türkçe bir yönetim paneli.
 
 ```
 modrix          çekirdek + başlangıç teması (bu depo)
-modrix-store    modüller: blog, sayfalar, formlar, mağaza, randevu, SSS, bülten...   → panelden tek tıkla
-modrix-themes   temalar: Kurumsal, Lacivert...                                         → panelden tek tıkla
+modrix-modules  modüller: blog, sayfalar, formlar, mağaza, randevu, SSS, bülten...   → panelden tek tıkla
+modrix-themes   temalar: Blueberry, Redmo...                                           → panelden tek tıkla
 ```
 
 ## Neler var?
@@ -19,11 +19,11 @@ modrix-themes   temalar: Kurumsal, Lacivert...                                  
 - Yedekler, **tek tıkla güncelleme** (önce yedek, hata olursa otomatik geri alma), **mağaza** (modül ve tema)
 - Kurulum sihirbazı, komut satırı (`php modrix`), testler
 
-**Mağazadaki modüller** ([modrix-store](https://github.com/ercanulucandev/modrix-store))
+**Mağazadaki modüller** ([modrix-modules](https://github.com/ercanulucandev/modrix-modules))
 Sayfalar · Blog · Formlar · Mağaza (iyzico, PayTR, havale, kapıda ödeme) · Randevu · SSS · Ekip · Referanslar ·
 Portfolyo · Bülten · Çerez onayı (KVKK) · Canlı destek · WhatsApp
 
-**Temalar** ([modrix-themes](https://github.com/ercanulucandev/modrix-themes)) · Çekirdekte sade bir başlangıç teması (Default) gelir.
+**Temalar** ([modrix-themes](https://github.com/ercanulucandev/modrix-themes)) · Çekirdekte sade bir başlangıç teması (**Başlangıç**) gelir; mağazada **Blueberry** ve **Redmo**.
 
 ## Kurulum
 

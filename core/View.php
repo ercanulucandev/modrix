@@ -6,7 +6,7 @@ use RuntimeException;
 // Görünümler.
 //
 // Sitede görünümler önce etkin temada aranır (app/Themes/{Tema}/views/..., modüller için app/Themes/{Tema}/modules/{Modül}/...),
-// sonra Default temada, en son burada. Yönetim paneli temadan etkilenmez. Bkz. core/Theme.php
+// sonra başlangıç temasında (Baslangic), en son burada. Yönetim paneli temadan etkilenmez. Bkz. core/Theme.php
 //
 //   View::render('home')                    -> app/Themes/{Tema}/views/home.php  (yoksa app/Views/home.php)
 //   View::render('errors/404')              -> app/Views/errors/404.php

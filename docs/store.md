@@ -1,6 +1,6 @@
 # Mağaza
 
-**Sistem > Mağaza**: iki sekme, **Modüller** ([modrix-store](https://github.com/ercanulucandev/modrix-store)) ve **Temalar**
+**Sistem > Mağaza**: iki sekme, **Modüller** ([modrix-modules](https://github.com/ercanulucandev/modrix-modules)) ve **Temalar**
 ([modrix-themes](https://github.com/ercanulucandev/modrix-themes)). Her kartta sürüm, yazar, kategori, fiyat ve durum:
 **Kur**, **Güncelle** (yeni sürüm varsa), **Yüklü**, ya da uyumsuzsa nedeni (daha yeni Modrix ya da PHP gerekir).
 
@@ -33,19 +33,31 @@ Temalarda kök anahtar `themes`, simge yerine `screenshot`. Göreli adresler kat
 
 ## Yayınlamak (geliştirici)
 
-Modüller ve ek temalar çekirdek deposunda değil, kendi depolarındadır; geliştirirken `app/Modules` ve `app/Themes` altında
-durur. Sürümü artırıp (`module.json` / `theme.json`) paketleri ve kataloğu üretin:
+Modüller ve ek temalar çekirdek deposunda değil, kendi depolarındadır. Önerilen klasör düzeni:
+
+```
+modrix-base/
+├── modrix/           çekirdek (bu depo)
+├── modrix-modules/   modules/<Ad>  kaynak, packages/, icons/, catalog.json
+└── modrix-themes/    themes/<Ad>   kaynak, packages/, screenshots/, catalog.json
+```
+
+Geliştirirken çekirdekteki `app/Modules/<Ad>` ve `app/Themes/<Ad>` klasörleri depodaki kaynağa bağlantıdır
+(Windows: `mklink /J modrix\app\Modules\Blog modrix-modules\modules\Blog`, Linux/macOS: `ln -s`). Böylece tek kopya
+üzerinde çalışırsınız; bağlantılı bir modül ya da tema panelden silinse bile kaynağa dokunulmaz.
+
+Sürümü artırıp (`module.json` / `theme.json`) paketleri ve kataloğu üretin:
 
 ```bash
-php modrix store:build --base=https://raw.githubusercontent.com/ercanulucandev/modrix-store/main/
+php modrix store:build
 ```
 
 ```bash
-php modrix store:build --themes --base=https://raw.githubusercontent.com/ercanulucandev/modrix-themes/main/
+php modrix store:build --themes
 ```
 
-Çıktı `dist/store/` ve `dist/themes/`: bu klasörler mağaza depolarının yerel kopyalarıdır (`catalog.json`, `packages/*.zip`,
-simgeler/ekran görüntüleri ve GitHub'da okunabilsin diye kaynak kod). Klasöre girip `git add -A`, `commit`, `push`;
+Çıktı varsayılan olarak yandaki `modrix-modules` / `modrix-themes` klasörüdür (yoksa `dist/modules`, `dist/themes`;
+başka yer için `--out=klasör`, farklı indirme adresi için `--base=https://.../`). Klasöre girip `git add -A`, `commit`, `push`;
 siteler 6 saat içinde yeni sürümü görür. Fiyat, kategori ve `buy_url`'yi `catalog.json`'da elle düzenleyin; sonraki
 derleme bunları korur. Ücretli ürünlerin paketlerini açık depoya koymayın (lisans sunucusundan indirilir).
 

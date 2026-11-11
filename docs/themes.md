@@ -6,13 +6,13 @@ Tema sitenin **görünümüdür**: layout, sayfa şablonları, renkler, yazı ti
 İçerik (yazılar, ayarlar, menüler) temadan bağımsızdır; tema değişince kaybolmaz.
 
 Yönetim: **Görünüm** menüsü → Temalar (önizle, etkinleştir), Özelleştir (canlı önizlemeli), Menüler.
-Çekirdekle sadece **Default** gelir (diğer temaların eksik dosyaları da ondan alınır); başka temalar **Sistem > Mağaza > Temalar**'dan
+Çekirdekle sadece **Başlangıç** (`app/Themes/Baslangic`) gelir (diğer temaların eksik dosyaları da ondan alınır); başka temalar **Sistem > Mağaza > Temalar**'dan
 kurulur ([modrix-themes](https://github.com/ercanulucandev/modrix-themes)).
 
 ## 1. Klasör yapısı
 
 ```
-app/Themes/Kurumsal/
+app/Themes/Redmo/
 ├── theme.json            ZORUNLU: ad, sürüm, menü konumları
 ├── screenshot.svg        Temalar sayfasındaki görsel (svg/png/webp/jpg, 4:3 önerilir, ör. 1200×900)
 ├── settings.php          Özelleştir alanları (bölüm bölüm)
@@ -24,21 +24,23 @@ app/Themes/Kurumsal/
 │   └── partials/...      kendi parçaların ya da ezdiğin ortak parçalar (pagination.php vb.)
 ├── modules/              modül görünümlerini ezer
 │   └── Blog/index.php    Blog::index yerine kullanılır (app/Modules/Blog/Views/index.php)
-└── assets/               css, js, görseller, fontlar  ->  /theme/kurumsal/...
+└── assets/               css, js, görseller, fontlar  ->  /theme/redmo/...
 ```
 
-**Klasör adı** büyük harfle başlar, sadece harf/rakam (`Kurumsal`, `Magaza`). Adreslerde küçük harfle geçer.
+**Klasör adı** büyük harfle başlar, sadece harf/rakam (`Redmo`, `Magaza`). Adreslerde küçük harfle geçer.
 
 ### Ezme (override) kuralı
 
 Sitede bir görünüm şu sırayla aranır:
 
 1. Etkin tema: `app/Themes/{Tema}/views/home.php` (modüller için `app/Themes/{Tema}/modules/Blog/index.php`)
-2. Varsayılan tema: `app/Themes/Default/...`
+2. Başlangıç teması: `app/Themes/Baslangic/...`
 3. Çekirdek ya da modül: `app/Views/...`, `app/Modules/Blog/Views/...`
 
-Yani bir tema **sadece değiştirmek istediği dosyaları** içerir. Kurumsal tema `partials/nav.php` içermez,
-menüyü Default temanın dosyasıyla çizer. `Default` teması silinmemeli (diğerlerinin yedeğidir).
+Yani bir tema **sadece değiştirmek istediği dosyaları** içerir. Redmo teması `partials/nav.php` içermez,
+menüyü Başlangıç temasının dosyasıyla çizer. Başlangıç teması silinemez (diğerlerinin yedeğidir).
+
+Etkin olmayan temalar **Görünüm > Temalar**'dan silinebilir; temanın ayarları ve menü atamaları da silinir.
 
 Yönetim paneli (`/admin`) temadan **hiç** etkilenmez.
 
@@ -46,7 +48,7 @@ Yönetim paneli (`/admin`) temadan **hiç** etkilenmez.
 
 ```json
 {
-    "name": "Kurumsal",
+    "name": "Redmo",
     "version": "1.0.0",
     "description": "Şirketler için...",
     "author": "Modrix",
@@ -153,7 +155,7 @@ Tüm ayrıntılar: [Bölümler](sections.md).
 <?php endforeach ?>
 ```
 
-Alt menülü hazır çizim: `View::render('partials/nav', ['items' => Menu::location('header')])` (Default temadan).
+Alt menülü hazır çizim: `View::render('partials/nav', ['items' => Menu::location('header')])` (Başlangıç temasından).
 
 Modüller "Hazır bağlantılar" listesine öğe ekleyebilir (sadece kalıcı sayfalar; yazı gibi çok sayıda içerik eklemeyin):
 
@@ -163,10 +165,10 @@ Hook::on('menu.links', fn(array $l) => [...$l, ['group' => 'Ürünler', 'label' 
 
 ## 6. Dosyalar (assets)
 
-`app/Themes/Kurumsal/assets/css/style.css` → `<link rel="stylesheet" href="<?= Theme::asset('css/style.css') ?>">`
+`app/Themes/Redmo/assets/css/style.css` → `<link rel="stylesheet" href="<?= Theme::asset('css/style.css') ?>">`
 
 İzinli türler: css, js, json, png, jpg, jpeg, gif, webp, svg, ico, woff, woff2, ttf. Temanın PHP dosyalarına
-ve `assets/` dışına dışarıdan ulaşılamaz. Etkin temada olmayan dosya Default temadan verilir.
+ve `assets/` dışına dışarıdan ulaşılamaz. Etkin temada olmayan dosya Başlangıç temasından verilir.
 
 ## 7. functions.php
 

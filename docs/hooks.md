@@ -63,4 +63,4 @@ Olay (fire): `cache.hit` ($path) — sayfa önbellekten verildi (bkz. [Performan
 Filtre: `consent.enabled` (false) — çerez onayı modülü true yapar; modül kodunu `type="text/plain" data-consent="..."` ile bekletir.
 Olaylar: `collection.saved`, `collection.deleted` ($ad, $öğe) — bkz. [Koleksiyonlar](collections.md).
 Filtreler: `cache.skip` (önbelleğe girmeyecek adres önekleri), `site.header_actions` (temanın üst kısmına HTML, ör. sepet simgesi).
-Olaylar: `shop.order.created`, `shop.order.paid`, `shop.order.status` — bkz. [Mağaza](https://github.com/ercanulucandev/modrix-store/blob/main/docs/shop.md).
+Olaylar: `shop.order.created`, `shop.order.paid`, `shop.order.status` — bkz. [Mağaza](https://github.com/ercanulucandev/modrix-modules/blob/main/docs/shop.md).

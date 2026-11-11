@@ -2,7 +2,7 @@
 
 > Sıfırdan bir modül yazmak için adım adım rehber: [Modül yazma: adım adım](module-tutorial.md). İskelet: `php modrix make:module Ad`.
 
-Örnekler: [modrix-store](https://github.com/ercanulucandev/modrix-store) deposundaki `modules/` klasörü (Blog, Mağaza, Randevu...) —
+Örnekler: [modrix-modules](https://github.com/ercanulucandev/modrix-modules) deposundaki `modules/` klasörü (Blog, Mağaza, Randevu...) —
 her başlıktaki kuralın çalışan hali orada. Modüller çekirdek deposunda tutulmaz; yayınlamak: [Mağaza](store.md#yayınlamak-geliştirici).
 Tek paket: `php modrix module:pack Blog` → `dist/Blog-1.0.0.zip`
 

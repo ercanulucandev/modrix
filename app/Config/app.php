@@ -9,7 +9,7 @@ return [
 
     // Mağaza katalogları (Admin > Sistem > Mağaza): modüller ve temalar. HTTPS adresi ya da yerel dosya (geliştirme). Bkz. docs/store.md
     'store' => [
-        'modules' => 'https://raw.githubusercontent.com/ercanulucandev/modrix-store/main/catalog.json',
+        'modules' => 'https://raw.githubusercontent.com/ercanulucandev/modrix-modules/main/catalog.json',
         'themes'  => 'https://raw.githubusercontent.com/ercanulucandev/modrix-themes/main/catalog.json',
     ],
 

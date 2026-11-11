@@ -5,7 +5,7 @@ use Core\Controller;
 use Core\Theme;
 
 // Tema dosyaları: /theme/{tema}/{yol}  ->  app/Themes/{Tema}/assets/{yol}
-//   /theme/kurumsal/css/style.css  ->  app/Themes/Kurumsal/assets/css/style.css
+//   /theme/redmo/css/style.css  ->  app/Themes/Redmo/assets/css/style.css
 // Sadece assets/ klasörü ve izinli türler sunulur; temanın PHP dosyalarına dışarıdan ulaşılamaz.
 // View içinde adres için Theme::asset('css/style.css').
 class ThemeAssetController extends Controller

@@ -21,7 +21,7 @@ $picked = $old ? (array) ($old['modules'] ?? []) : Installer::RECOMMENDED;
   <fieldset>
     <legend class="label">Tema</legend>
     <div class="mt-2 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
-      <label class="flex cursor-pointer items-center gap-2 rounded-md border p-2.5 has-[:checked]:border-zinc-900"><input type="radio" name="theme" value="Default" class="size-4" <?= ($old['theme'] ?? 'Default') === 'Default' ? 'checked' : '' ?>> Varsayılan</label>
+      <label class="flex cursor-pointer items-center gap-2 rounded-md border p-2.5 has-[:checked]:border-zinc-900"><input type="radio" name="theme" value="<?= Core\Theme::DEFAULT ?>" class="size-4" <?= ($old['theme'] ?? Core\Theme::DEFAULT) === Core\Theme::DEFAULT ? 'checked' : '' ?>> Başlangıç</label>
       <?php foreach ($themes['items'] as $t): ?>
         <label class="flex cursor-pointer items-center gap-2 rounded-md border p-2.5 has-[:checked]:border-zinc-900"><input type="radio" name="theme" value="<?= View::e($t['slug']) ?>" class="size-4" <?= ($old['theme'] ?? '') === $t['slug'] ? 'checked' : '' ?>> <?= View::e($t['name']) ?></label>
       <?php endforeach ?>

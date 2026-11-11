@@ -18,7 +18,7 @@ Router::get('/media/{path*}', [MediaController::class, 'show'])->name('media');
 // Adres için: Module::asset('Blog', 'admin/posts-page.js')
 Router::get('/assets/{module}/{path*}', [ModuleAssetController::class, 'show'])->name('module.asset');
 
-// Temaların dosyaları: /theme/kurumsal/css/style.css -> app/Themes/Kurumsal/assets/css/style.css
+// Temaların dosyaları: /theme/redmo/css/style.css -> app/Themes/Redmo/assets/css/style.css
 // Adres için: Theme::asset('css/style.css')
 Router::get('/theme/{theme}/{path*}', [ThemeAssetController::class, 'show'])->name('theme.asset');
 

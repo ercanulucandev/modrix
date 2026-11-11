@@ -27,4 +27,4 @@ Thumbs.db
 /app/Modules/*
 !/app/Modules/.gitkeep
 /app/Themes/*
-!/app/Themes/Default/
+!/app/Themes/Baslangic/

@@ -79,7 +79,7 @@ her bölüm kendi `<section><div class="wrap">` yapısını kurar:
 ```
 
 **Menü:** `Menu::location('header')` öğeleri verir (`label`, `href`, `active`, `new_tab`, `children`). Alt menülü hazır
-çizim: `View::render('partials/nav', ['items' => Menu::location('header')])` (Default temadan gelir). Kendi tasarımınız
+çizim: `View::render('partials/nav', ['items' => Menu::location('header')])` (Başlangıç temasından gelir). Kendi tasarımınız
 için `views/partials/nav.php` yazın.
 
 **Tıklayarak düzenleme:** önizlemede tıklanınca paneli açmak için öğelere işaret koyun (ziyaretçiye hiçbir şey yazılmaz):
@@ -215,7 +215,7 @@ Modül görünümleri temada aynı yolla ezilir. Blog listesini Ajans tarzında 
 ```
 
 Hangi değişkenlerin geldiğini öğrenmek için modülün kendi görünümüne bakın (`app/Modules/Blog/Views/index.php`).
-Temada olmayan her dosya Default temadan ya da modülün kendisinden gelir; sadece değiştirmek istediğinizi yazın.
+Temada olmayan her dosya Başlangıç temasından ya da modülün kendisinden gelir; sadece değiştirmek istediğinizi yazın.
 
 ## 7. Sayfa şablonu
 

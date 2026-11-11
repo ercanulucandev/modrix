@@ -1,5 +1,5 @@
 <?php
-// Varsayılan tema: site layout'u. Renk, yazı tipi, üst/alt kısım: Görünüm > Özelleştir.
+// Başlangıç teması: site layout'u. Renk, yazı tipi, üst/alt kısım: Görünüm > Özelleştir.
 // Menüler: Görünüm > Menüler ('header' ve 'footer' konumları, theme.json).
 $siteName = Setting::get('site_name', Config::get('app.name'));
 $logo     = Setting::url('logo');

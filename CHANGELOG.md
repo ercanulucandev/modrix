@@ -2,10 +2,23 @@
 
 Her sürüm "## vX.Y.Z" başlığıyla; sürüm yayınlanınca bu bölüm GitHub'daki sürüm notu ve sitelerdeki Güncellemeler sayfasında gösterilir.
 
+## v1.0.1
+
+### Temalar
+- Yeni başlangıç teması **Başlangıç** (eski adı Default): simgeli özellik kartları bölümü eklendi
+- Mağazada iki yeni tema: **Blueberry** (yazılım / SaaS) ve **Redmo** (şirket / ajans); Kurumsal ve Lacivert'in yerini aldı
+- Etkin olmayan temalar **Görünüm**'den silinebilir (ayarları ve menü atamaları da silinir)
+- Modül sayfalarında kullanılan durum rozetleri ve uyarı kutusu tüm temalarda ortak
+
+### Düzeltmeler
+- Sürüm ZIP'inden kurulumda `storage/` ve `storage/uploads` olmadığı için çıkan hata: çalışma klasörleri artık kendiliğinden oluşturulur
+- Kaldırılmış bir modülü mağazadan yeniden kurarken çıkan "klasör zaten var" hatası
+- Modül deposu `modrix-modules` olarak yeniden adlandırıldı; `store:build` çıktısı yandaki depo klasörüne yazılır
+
 ## v1.0.0
 
-İlk sürüm: sade çekirdek ve başlangıç teması (Default). Modüller ve temalar mağazadan kurulur
-([modrix-store](https://github.com/ercanulucandev/modrix-store), [modrix-themes](https://github.com/ercanulucandev/modrix-themes)).
+İlk sürüm: sade çekirdek ve başlangıç teması. Modüller ve temalar mağazadan kurulur
+([modrix-modules](https://github.com/ercanulucandev/modrix-modules), [modrix-themes](https://github.com/ercanulucandev/modrix-themes)).
 
 ### Yönetim paneli
 - Sade menü (gruplar ve sekmeler), genel bakış (30 günlük grafik, dikkat isteyenler, hızlı işlemler), gece modu

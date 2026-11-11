@@ -183,7 +183,9 @@ final class Updater
         $zip->open($file, ZipArchive::CREATE);
         foreach ($list as $rel) {
             $rel = str_replace('\\', '/', trim($rel));
-            if ($rel === '' || self::skipped($rel) || !is_file(ROOT . "/$rel")) continue;
+            // Pakete girmez: yerel ayarlar, .git, .github, dist, vendor. storage/ iskeleti (.gitkeep, .htaccess) girer.
+            if ($rel === '' || !is_file(ROOT . "/$rel") || preg_match('#^(app/Config/[^/]+\.local\.php|\.git(hub)?/|dist/|vendor/)#', $rel)) continue;
+            if (str_starts_with($rel, 'storage/') && !preg_match('#(^|/)\.(gitkeep|htaccess)$#', $rel)) continue;
             $zip->addFile(ROOT . "/$rel", "modrix/$rel");
         }
         $zip->close();

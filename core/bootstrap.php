@@ -2,6 +2,12 @@
 // index.php ve modrix (komut satırı) tarafından yüklenir.
 define('ROOT', dirname(__DIR__));
 
+// Çalışma klasörleri (sürüm ZIP'inden ya da git'ten gelen kurulumda boş olabilir): eksikse oluşturulur
+foreach (['storage', 'storage/uploads', 'storage/logs', 'storage/tmp', 'storage/cache', 'storage/backups'] as $dir) {
+    if (!is_dir(ROOT . "/$dir")) @mkdir(ROOT . "/$dir", 0775, true);
+}
+if (!is_file(ROOT . '/storage/.htaccess')) @file_put_contents(ROOT . '/storage/.htaccess', "Require all denied\n");
+
 // 1. Autoload: composer install yapıldıysa vendor/autoload.php, yoksa composer.json'daki PSR-4 haritası
 if (is_file(ROOT . '/vendor/autoload.php')) {
     require ROOT . '/vendor/autoload.php';

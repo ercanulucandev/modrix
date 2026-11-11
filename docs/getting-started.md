@@ -14,7 +14,7 @@ Dosyaları sunucuya yükleyip siteyi tarayıcıda açın: kurulmamış site kend
 1. **Gereksinimler** denetlenir (PHP, eklentiler, yazılabilir klasörler).
 2. **Veritabanı** bilgileri girilir; bağlantı denenir, veritabanı yoksa oluşturulur, `app/Config/database.local.php` yazılır.
 3. **Site adı, yönetici hesabı, tema ve modüller** seçilir; tablolar kurulur, seçilen modül ve tema mağazadan indirilip
-   kurulur (internet yoksa sadece çekirdek ve Default tema), panele giriş yapılmış olarak açılır.
+   kurulur (internet yoksa sadece çekirdek ve Başlangıç teması), panele giriş yapılmış olarak açılır.
 
 Kurulum bitince `storage/installed.lock` oluşur ve `/install` kapanır (404). Aşağıdaki adımlar elle / komut satırıyla kurulum içindir.
 

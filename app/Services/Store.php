@@ -11,24 +11,24 @@ use Core\ThemeInstaller;
 use RuntimeException;
 use Throwable;
 
-// Mağaza: modüller (modrix-store deposu) ve temalar (modrix-themes deposu). Admin > Sistem > Mağaza.
+// Mağaza: modüller (modrix-modules deposu) ve temalar (modrix-themes deposu). Admin > Sistem > Mağaza.
 //
 //   Store::catalog('modules')   Store::catalog('themes')
-//   Store::install('Blog')      Store::install('Kurumsal', 'themes')
+//   Store::install('Blog')      Store::install('Redmo', 'themes')
 //
 // Katalog (catalog.json; adres: app/Config/app.php -> store.modules / store.themes, ya da yerel dosya yolu):
 //   { "modules": [ { "slug": "Blog", "name": "Blog", "version": "2.1.0", "description": "...", "author": "Modrix",
 //       "category": "İçerik", "icon": "icons/Blog.svg", "download": "packages/Blog-2.1.0.zip", "sha256": "…",
 //       "requires": { "modrix": "1.0.0", "php": "8.1" }, "price": 0, "buy_url": "" } ] }
-//   Temalar: { "themes": [ { ... aynı alanlar, "screenshot": "screenshots/Kurumsal.svg" } ] }
+//   Temalar: { "themes": [ { ... aynı alanlar, "screenshot": "screenshots/Redmo.svg" } ] }
 // Göreli adresler katalog dosyasının yanına göre çözülür. sha256 zorunludur.
-// Üretmek: php modrix store:build (modüller -> dist/store), php modrix store:build --themes (temalar -> dist/themes)
+// Üretmek: php modrix store:build [--themes] [--out=klasör] [--base=adres] (varsayılan çıktı: ../modrix-modules ya da ../modrix-themes)
 final class Store
 {
     public const TYPES = ['modules' => 'Modüller', 'themes' => 'Temalar'];
     private const TTL = 21600;   // 6 saat
     private const DEFAULTS = [
-        'modules' => 'https://raw.githubusercontent.com/ercanulucandev/modrix-store/main/catalog.json',
+        'modules' => 'https://raw.githubusercontent.com/ercanulucandev/modrix-modules/main/catalog.json',
         'themes'  => 'https://raw.githubusercontent.com/ercanulucandev/modrix-themes/main/catalog.json',
     ];
 
@@ -113,17 +113,19 @@ final class Store
         Setting::set(['store_license_' . strtolower($slug) => $key === '' ? null : Crypt::encrypt($key)]);
     }
 
-    // Yayıncı için: kurulu tüm modülleri (ya da Default dışındaki temaları) paketler.
-    // dist/store (dist/themes): catalog.json, packages/*.zip, icons/ (screenshots/), modules/ (themes/) altında okunabilir kaynak.
-    // Elle eklenen fiyat, kategori, buy_url korunur.
-    public static function build(string $base = '', string $type = 'modules'): string
+    // Yayıncı için: kurulu tüm modülleri (ya da başlangıç teması dışındaki temaları) paketler.
+    // Çıktı klasörü (mağaza deposunun yerel kopyası): catalog.json, packages/*.zip, icons/ (screenshots/),
+    // modules/ (themes/) altında okunabilir kaynak. Elle eklenen fiyat, kategori, buy_url korunur.
+    // Varsayılan çıktı: çekirdeğin yanındaki modrix-modules / modrix-themes klasörü, yoksa dist/modules / dist/themes.
+    // app/Modules/X kaynağın kendisine bağlıysa (junction/symlink) kaynak kopyalanmaz; kaynak klasörü hiçbir zaman silinmez.
+    public static function build(string $base = '', string $type = 'modules', ?string $out = null): string
     {
-        $dir = ROOT . '/dist/' . ($type === 'themes' ? 'themes' : 'store');
-        foreach (['packages', $type === 'themes' ? 'screenshots' : 'icons'] as $sub) if (!is_dir("$dir/$sub")) mkdir("$dir/$sub", 0775, true);
+        $dir = rtrim(str_replace('\\', '/', $out ?? self::defaultOut($type)), '/');
+        if ($base === '') $base = preg_match('#^https://#', self::source($type)) ? preg_replace('#[^/]*$#', '', self::source($type)) : '';
+        foreach (['packages', $type === 'themes' ? 'screenshots' : 'icons', $type] as $sub) if (!is_dir("$dir/$sub")) mkdir("$dir/$sub", 0775, true);
         $existing = is_file("$dir/catalog.json") ? (json_decode((string) file_get_contents("$dir/catalog.json"), true)[$type] ?? []) : [];
         $extra = array_column($existing, null, 'slug');
         foreach (glob("$dir/packages/*.zip") ?: [] as $old) unlink($old);
-        if (is_dir("$dir/$type")) Module::removeDir("$dir/$type");
 
         $items = [];
         $sources = $type === 'themes' ? array_diff_key(Theme::all(), [Theme::DEFAULT => true]) : Module::all();
@@ -131,7 +133,11 @@ final class Store
             if (!empty($m['error'])) continue;
             $zip = $type === 'themes' ? ThemeInstaller::pack($folder) : ModuleInstaller::pack($folder);
             rename($zip, "$dir/packages/" . basename($zip));
-            self::copyDir(ROOT . '/app/' . ($type === 'themes' ? 'Themes' : 'Modules') . "/$folder", "$dir/$type/$folder");
+            $src = ROOT . '/app/' . ($type === 'themes' ? 'Themes' : 'Modules') . "/$folder";
+            if (realpath($src) !== realpath("$dir/$type/$folder")) {   // kaynak zaten oradaysa (bağlantı) dokunma
+                if (is_dir("$dir/$type/$folder")) Module::removeDir("$dir/$type/$folder");
+                self::copyDir($src, "$dir/$type/$folder");
+            }
             $entry = [
                 'slug' => $folder, 'name' => $m['name'], 'version' => $m['version'], 'description' => $m['description'], 'author' => $m['author'],
                 'category' => $extra[$folder]['category'] ?? 'Diğer', 'requires' => ['modrix' => App::VERSION, 'php' => $m['requires']['php'] ?? '8.1'],
@@ -148,6 +154,12 @@ final class Store
         }
         file_put_contents("$dir/catalog.json", json_encode(['generated_at' => date('c'), $type => $items], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . "\n");
         return "$dir/catalog.json";
+    }
+
+    public static function defaultOut(string $type): string
+    {
+        $repo = dirname(ROOT) . '/modrix-' . ($type === 'themes' ? 'themes' : 'modules');
+        return is_dir($repo) ? $repo : ROOT . '/dist/' . ($type === 'themes' ? 'themes' : 'modules');
     }
 
     // ---- İç

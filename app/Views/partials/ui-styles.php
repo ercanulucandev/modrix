@@ -25,10 +25,17 @@
       .field-help { @apply mt-2 text-sm text-muted-foreground; }
       .card { @apply rounded-lg border bg-card shadow-xs; }
       .badge { @apply inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium whitespace-nowrap; }
+      /* Modül sayfalarındaki durum rozetleri (mağaza, randevu, sipariş...) */
+      .badge-default { @apply border-transparent bg-primary text-primary-foreground; }
+      .badge-gray { @apply border-transparent bg-muted text-muted-foreground; }
+      .badge-green { @apply border-emerald-200 bg-emerald-50 text-emerald-700; }
+      .badge-yellow { @apply border-amber-200 bg-amber-50 text-amber-800; }
+      .badge-red { @apply border-red-200 bg-red-50 text-red-700; }
       .alert { @apply mb-6 w-full rounded-lg border px-4 py-3 text-sm; }
       .alert-ok { @apply border-emerald-200 bg-emerald-50 text-emerald-900; }
       .alert-error { @apply border-red-200 bg-red-50 text-red-900; }
       .alert-info { @apply bg-card; }
+      .alert-warning { @apply border-amber-200 bg-amber-50 text-amber-900; }
       /* Editörden gelen yazı içeriği (Html::render) */
       .prose-content { @apply leading-7 text-foreground/90; }
       .prose-content > * + * { @apply mt-5; }

@@ -1,5 +1,5 @@
 <?php
-// Varsayılan tema: giriş
+// Başlangıç teması: giriş
 $text = $s['text'];
 $tagline = $text === '' ? Setting::get('site_tagline') : null;
 $intro = $text === '' ? Setting::get('site_description') : null;

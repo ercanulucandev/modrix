@@ -1,7 +1,7 @@
 {
-    "name": "Varsayılan",
+    "name": "Başlangıç",
     "version": "1.0.0",
-    "description": "Sade, köşeli ve hızlı. Blog, kişisel site ve küçük işletmeler için temiz bir başlangıç. Diğer temaların eksik dosyaları bu temadan gelir.",
+    "description": "Sade, hızlı ve her modülle uyumlu başlangıç teması: temiz tipografi, ayarlanabilir ana renk, köşe ve yazı tipi. Diğer temaların eksik dosyaları bu temadan gelir.",
     "author": "Modrix",
     "requires": {
         "php": "8.1"
@@ -14,6 +14,9 @@
         "home": [
             {
                 "type": "hero"
+            },
+            {
+                "type": "features"
             },
             {
                 "type": "core.cta"

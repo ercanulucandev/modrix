@@ -9,7 +9,7 @@ View::render('home')->setLayout('site')         // layout'a sarılı (controller
 View::render('partials/pagination', ['page' => $sonuc])   // görünüm içinde parça (layout'suz)
 ```
 
-**Sitede** görünümler önce etkin temada, sonra Default temada, en son yukarıdaki yerlerde aranır. Böylece bir tema
+**Sitede** görünümler önce etkin temada, sonra başlangıç temasında (`Baslangic`), en son yukarıdaki yerlerde aranır. Böylece bir tema
 `Siparis::index`'i `app/Themes/{Tema}/modules/Siparis/index.php` ile ezebilir. Yönetim paneli temadan etkilenmez.
 Ayrıntı: [Temalar](themes.md#ezme-override-kuralı).
 
@@ -30,7 +30,7 @@ Görünüm içindeki yardımcılar:
 | `Html::text($html, 160)` | Etiketsiz özet |
 | `Icon::svg('rocket', 'size-5')` | Ortak simge seti (adlar: `core/Icon.php`) |
 
-Hazır parçalar: `partials/flash` (mesajlar), `partials/pagination`, `partials/field` (form alanı), `partials/nav` (Default
+Hazır parçalar: `partials/flash` (mesajlar), `partials/pagination`, `partials/field` (form alanı), `partials/nav` (Başlangıç
 temadan, alt menülü menü).
 
 ## Ortak arayüz sınıfları

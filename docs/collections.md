@@ -45,4 +45,4 @@ Collection::imageUrl($b['photo']);                              // görsel adres
 
 Olaylar: `collection.saved` ($ad, $öğe), `collection.deleted` ($ad, $öğe). Veriler `collection_items` tablosunda (JSON);
 modül kaldırılınca silinmesi için modülün `.down.sql` migration'ına: `DELETE FROM collection_items WHERE collection = 'branches';`
-Hazır örnekler: [modrix-store](https://github.com/ercanulucandev/modrix-store) → `modules/Faq`, `Team`, `References`, `Portfolio`.
+Hazır örnekler: [modrix-modules](https://github.com/ercanulucandev/modrix-modules) → `modules/Faq`, `Team`, `References`, `Portfolio`.

@@ -1,7 +1,7 @@
 # Modrix belgeleri
 
-Modrix üç parçadan oluşur: **çekirdek** (bu depo, başlangıç teması Default ile), **modüller**
-([modrix-store](https://github.com/ercanulucandev/modrix-store)) ve **temalar** ([modrix-themes](https://github.com/ercanulucandev/modrix-themes)).
+Modrix üç parçadan oluşur: **çekirdek** (bu depo, başlangıç teması Başlangıç ile), **modüller**
+([modrix-modules](https://github.com/ercanulucandev/modrix-modules)) ve **temalar** ([modrix-themes](https://github.com/ercanulucandev/modrix-themes)).
 Modül ve temalar panelde **Sistem > Mağaza**'dan tek tıkla kurulur ve güncellenir.
 
 ## Başlarken
@@ -43,7 +43,7 @@ Modül ve temalar panelde **Sistem > Mağaza**'dan tek tıkla kurulur ve güncel
 | [Güvenlik](security.md) | Kaçırma, CSRF, HTML temizleme, yükleme, yetki |
 | [Testler](testing.md) | `php modrix test`, test yazmak, GitHub Actions |
 
-Modüllerin kendi kullanım rehberleri (Mağaza, Randevu...) [modrix-store](https://github.com/ercanulucandev/modrix-store) deposundadır.
+Modüllerin kendi kullanım rehberleri (Mağaza, Randevu...) [modrix-modules](https://github.com/ercanulucandev/modrix-modules) deposundadır.
 
 ## Klasör yapısı
 
@@ -62,7 +62,7 @@ app/
 ├── Sections/      her temada kullanılabilen genel bölümler (yazı bloğu, çağrı bandı...)
 ├── Assets/        yönetim panelinin JS/CSS'i ve ortak arayüz kiti (lib/) -> /assets/app/...
 ├── Modules/       kurulu modüller (mağazadan gelir; çekirdek deposunda yoktur)
-├── Themes/        temalar: Default (çekirdekle gelir) + mağazadan kurulanlar
+├── Themes/        temalar: Baslangic (çekirdekle gelir) + mağazadan kurulanlar
 └── Hooks.php      uygulama genelindeki hook kayıtları ve hook noktalarının listesi
 core/              çatı: Router, View, Database, Theme, Section, Module... (güncellemeyle değişir, dokunmayın)
 storage/           yüklenen dosyalar (uploads/), loglar (logs/), geçici dosyalar

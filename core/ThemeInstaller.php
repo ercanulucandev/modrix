@@ -7,7 +7,7 @@ use ZipArchive;
 // Temayı ZIP'ten kurar ya da günceller (Admin > Sistem > Mağaza > Temalar, ya da ZIP yükleme).
 //
 // ZIP yapısı: tek kök klasör (tema adı) ve içinde theme.json
-//   Kurumsal/theme.json, Kurumsal/views/layouts/site.php, Kurumsal/assets/...
+//   Redmo/theme.json, Redmo/views/layouts/site.php, Redmo/assets/...
 //
 // Güvenlik: ModuleInstaller ile aynı (zip slip, gizli dosyalar atlanır, izinli türler, boyut sınırı, önce geçici klasör).
 // Var olan temanın üzerine sadece daha yeni sürüm yazılır; hata olursa eski sürüm geri gelir. Kurulan tema etkinleşmez.
@@ -39,7 +39,7 @@ class ThemeInstaller
         return $target;
     }
 
-    // Dönüş: ['folder' => 'Kurumsal', 'action' => 'installed' | 'updated', 'version' => '1.1.0']
+    // Dönüş: ['folder' => 'Redmo', 'action' => 'installed' | 'updated', 'version' => '1.1.0']
     public static function fromZip(string $zipPath): array
     {
         if (!class_exists(ZipArchive::class)) throw new RuntimeException('Sunucuda PHP zip eklentisi kapalı');

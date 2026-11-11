@@ -33,6 +33,18 @@ class AppearanceController extends AdminController
         $this->redirect('admin/appearance', "{$theme['name']} teması etkinleştirildi.");
     }
 
+    public function destroy(string $name): void
+    {
+        $theme = Theme::all()[$name] ?? $this->abort(404);
+        try {
+            Theme::delete($name);
+        } catch (Throwable $e) {
+            $this->redirect('admin/appearance', $e->getMessage(), 'error');
+        }
+        \App\Services\Activity::log('appearance.theme', "Temayı sildi: {$theme['name']}", 'admin/appearance');
+        $this->redirect('admin/appearance', "{$theme['name']} teması silindi.");
+    }
+
     // Siteyi bu temayla gez (sadece bu admin görür, ziyaretçiler etkin temayı görmeye devam eder)
     public function preview(string $name): void
     {

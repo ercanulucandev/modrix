@@ -113,18 +113,22 @@ $commands = [
         }
         echo "  ✓ v{$r['from']} → v{$r['to']}\n";
     }],
-    'store:build' => ['Mağaza paketleri:  php modrix store:build [--themes] --base=https://.../  (dist/store ya da dist/themes)', function (array $args) {
+    'store:build' => ['Mağaza paketleri:  php modrix store:build [--themes] [--out=klasör] [--base=https://.../]  (varsayılan: ../modrix-modules, ../modrix-themes)', function (array $args) {
         $base = '';
-        foreach ($args as $a) if (str_starts_with($a, '--base=')) $base = rtrim(substr($a, 7), '/') . '/';
+        $out = null;
+        foreach ($args as $a) {
+            if (str_starts_with($a, '--base=')) $base = rtrim(substr($a, 7), '/') . '/';
+            if (str_starts_with($a, '--out=')) $out = substr($a, 6);
+        }
         $type = in_array('--themes', $args, true) ? 'themes' : 'modules';
         try {
-            $file = App\Services\Store::build($base, $type);
+            $file = App\Services\Store::build($base, $type, $out);
         } catch (Throwable $e) {
             echo "  ✗ {$e->getMessage()}\n";
             return 1;
         }
         $n = count(json_decode(file_get_contents($file), true)[$type]);
-        echo '  ✓ ' . str_replace(ROOT . '/', '', $file) . " ($n " . ($type === 'themes' ? 'tema' : 'modül') . "). Klasörü mağaza deposuna gönderin (git add -A, commit, push).\n";
+        echo '  ✓ ' . $file . " ($n " . ($type === 'themes' ? 'tema' : 'modül') . "). Klasörü mağaza deposuna gönderin (git add -A, commit, push).\n";
     }],
     'release:pack' => ['Sürüm paketi:  dist/modrix-{sürüm}.zip + .sha256 (GitHub sürümüne yüklenir)', function () {
         try {

@@ -44,6 +44,11 @@ $form = fn(string $route, string $name, string $label, string $class) =>
             <a href="<?= Request::url('admin/appearance/customize?theme=' . $folder) ?>" class="btn btn-secondary btn-sm">Özelleştir ve önizle</a>
             <?= $form('admin.appearance.preview', $folder, 'Sitede gez', 'btn-ghost') ?>
           <?php endif ?>
+          <?php if (!$t['active'] && $folder !== Core\Theme::DEFAULT): ?>
+            <form method="post" action="<?= Router::url('admin.appearance.delete', ['name' => $folder]) ?>" class="ml-auto" onsubmit="return confirm(<?= View::e(json_encode($t['name'] . ' teması silinsin mi? Temanın ayarları da silinir; geri almak için mağazadan yeniden kurabilirsiniz.')) ?>)">
+              <?= View::csrf() ?><button class="btn btn-danger-ghost btn-sm">Sil</button>
+            </form>
+          <?php endif ?>
         </div>
       </div>
     </div>
@@ -51,6 +56,6 @@ $form = fn(string $route, string $name, string $label, string $class) =>
 </div>
 
 <p class="mt-8 text-sm text-muted-foreground">
-  Yeni tema: <code class="rounded-sm bg-muted px-1 py-0.5 font-mono text-xs text-foreground">app/Themes/</code> klasörüne bir tema klasörü ekleyin.
-  Tema sadece değiştirmek istediği dosyaları içerir, eksikler Varsayılan temadan gelir.
+  Yeni tema: <a href="<?= Request::url('admin/store?type=themes') ?>" class="font-medium text-foreground underline">Sistem &gt; Mağaza &gt; Temalar</a>'dan kurun
+  ya da <code class="rounded-sm bg-muted px-1 py-0.5 font-mono text-xs text-foreground">app/Themes/</code> klasörüne bir tema ekleyin. Temalarda eksik dosyalar başlangıç temasından gelir.
 </p>
